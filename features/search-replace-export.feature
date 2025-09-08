@@ -2,82 +2,82 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace export to STDOUT
-    Given a WP install
+    Given a FP install
     And I run `echo ' '`
     And save STDOUT as {SPACE}
 
-    When I run `wp search-replace example.com example.net --export`
+    When I run `fp search-replace example.com example.net --export`
     Then STDOUT should contain:
       """
-      DROP TABLE IF EXISTS `wp_commentmeta`;
-      CREATE TABLE `wp_commentmeta`
+      DROP TABLE IF EXISTS `fp_commentmeta`;
+      CREATE TABLE `fp_commentmeta`
       """
     And STDOUT should contain:
       """
       'siteurl', 'https://example.net',
       """
 
-    When I run `wp option get home`
+    When I run `fp option get home`
     Then STDOUT should be:
       """
       https://example.com
       """
 
-    When I run `wp search-replace example.com example.net --skip-tables=wp_options --export`
+    When I run `fp search-replace example.com example.net --skip-tables=fp_options --export`
     Then STDOUT should not contain:
       """
-      INSERT INTO `wp_options`
+      INSERT INTO `fp_options`
       """
 
-    When I run `wp search-replace example.com example.net --skip-tables=wp_opt\?ons,wp_post\* --export`
+    When I run `fp search-replace example.com example.net --skip-tables=fp_opt\?ons,fp_post\* --export`
     Then STDOUT should not contain:
       """
-      wp_posts
+      fp_posts
       """
     And STDOUT should not contain:
       """
-      wp_postmeta
+      fp_postmeta
       """
     And STDOUT should not contain:
       """
-      wp_options
+      fp_options
       """
     And STDOUT should contain:
       """
-      wp_users
+      fp_users
       """
 
-    When I run `wp search-replace example.com example.net --skip-columns=option_value --export`
+    When I run `fp search-replace example.com example.net --skip-columns=option_value --export`
     Then STDOUT should contain:
       """
-      INSERT INTO `wp_options` (`option_id`, `option_name`, `option_value`, `autoload`) VALUES{SPACE}
+      INSERT INTO `fp_options` (`option_id`, `option_name`, `option_value`, `autoload`) VALUES{SPACE}
       """
     And STDOUT should contain:
       """
     'siteurl', 'https://example.com'
       """
 
-    When I run `wp search-replace example.com example.net --skip-columns=option_value --export --export_insert_size=1`
+    When I run `fp search-replace example.com example.net --skip-columns=option_value --export --export_insert_size=1`
     Then STDOUT should contain:
       """
       'siteurl', 'https://example.com'
       """
     And STDOUT should contain:
       """
-    INSERT INTO `wp_options` (`option_id`, `option_name`, `option_value`, `autoload`) VALUES{SPACE}
+    INSERT INTO `fp_options` (`option_id`, `option_name`, `option_value`, `autoload`) VALUES{SPACE}
       """
 
-    When I run `wp search-replace foo bar --export | tail -n 1`
+    When I run `fp search-replace foo bar --export | tail -n 1`
     Then STDOUT should not contain:
       """
       Success: Made
       """
 
-    When I run `wp search-replace example.com example.net --export > wordpress.sql`
-    And I run `wp db import wordpress.sql`
+    When I run `fp search-replace example.com example.net --export > finpress.sql`
+    And I run `fp db import finpress.sql`
     Then STDOUT should not be empty
 
-    When I run `wp option get home`
+    When I run `fp option get home`
     Then STDOUT should be:
       """
       https://example.net
@@ -85,53 +85,53 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace export to file
-    Given a WP install
-    And I run `wp post generate --count=100`
-    And I run `wp option add example_url https://example.com`
+    Given a FP install
+    And I run `fp post generate --count=100`
+    And I run `fp option add example_url https://example.com`
 
-    When I run `wp search-replace example.com example.net --export=wordpress.sql`
+    When I run `fp search-replace example.com example.net --export=finpress.sql`
     Then STDOUT should contain:
       """
       Success: Made
       """
-    # Skip exact number as it changes in trunk due to https://core.trac.wordpress.org/changeset/42981
+    # Skip exact number as it changes in trunk due to https://core.trac.finpress.org/changeset/42981
     And STDOUT should contain:
       """
-      replacements and exported to wordpress.sql
+      replacements and exported to finpress.sql
       """
     And STDOUT should be a table containing rows:
       | Table         | Column       | Replacements | Type |
-      | wp_options    | option_value | 6            | PHP  |
+      | fp_options    | option_value | 6            | PHP  |
 
-    When I run `wp option get home`
+    When I run `fp option get home`
     Then STDOUT should be:
       """
       https://example.com
       """
 
-    When I run `wp site empty --yes`
-    And I run `wp post list --format=count`
+    When I run `fp site empty --yes`
+    And I run `fp post list --format=count`
     Then STDOUT should be:
       """
       0
       """
 
-    When I run `wp db import wordpress.sql`
+    When I run `fp db import finpress.sql`
     Then STDOUT should not be empty
 
-    When I run `wp option get home`
+    When I run `fp option get home`
     Then STDOUT should be:
       """
       https://example.net
       """
 
-    When I run `wp option get example_url`
+    When I run `fp option get example_url`
     Then STDOUT should be:
       """
       https://example.net
       """
 
-    When I run `wp post list --format=count`
+    When I run `fp post list --format=count`
     Then STDOUT should be:
       """
       101
@@ -139,22 +139,22 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace export to file with verbosity
-    Given a WP install
+    Given a FP install
 
-    When I run `wp search-replace example.com example.net --export=wordpress.sql --verbose`
+    When I run `fp search-replace example.com example.net --export=finpress.sql --verbose`
     Then STDOUT should contain:
       """
-      Checking: wp_posts
+      Checking: fp_posts
       """
     And STDOUT should contain:
       """
-      Checking: wp_options
+      Checking: fp_options
       """
 
   Scenario: Search / replace export with dry-run
-    Given a WP install
+    Given a FP install
 
-    When I try `wp search-replace example.com example.net --export --dry-run`
+    When I try `fp search-replace example.com example.net --export --dry-run`
     Then STDERR should be:
       """
       Error: You cannot supply --dry-run and --export at the same time.
@@ -162,40 +162,40 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace shouldn't affect primary key
-    Given a WP install
-    And I run `wp post create --post_title=foo --porcelain`
+    Given a FP install
+    And I run `fp post create --post_title=foo --porcelain`
     Then save STDOUT as {POST_ID}
 
-    When I run `wp option update {POST_ID} foo`
-    And I run `wp option get {POST_ID}`
+    When I run `fp option update {POST_ID} foo`
+    And I run `fp option get {POST_ID}`
     Then STDOUT should be:
       """
       foo
       """
 
-    When I run `wp search-replace {POST_ID} 99999999 --export=wordpress.sql`
-    And I run `wp db import wordpress.sql`
+    When I run `fp search-replace {POST_ID} 99999999 --export=finpress.sql`
+    And I run `fp db import finpress.sql`
     Then STDOUT should not be empty
 
-    When I run `wp post get {POST_ID} --field=title`
+    When I run `fp post get {POST_ID} --field=title`
     Then STDOUT should be:
       """
       foo
       """
 
-    When I try `wp option get {POST_ID}`
+    When I try `fp option get {POST_ID}`
     Then STDOUT should be empty
 
-    When I run `wp option get 99999999`
+    When I run `fp option get 99999999`
     Then STDOUT should be:
       """
       foo
       """
 
   Scenario: Search / replace export invalid file
-    Given a WP install
+    Given a FP install
 
-    When I try `wp search-replace example.com example.net --export=foo/bar.sql`
+    When I try `fp search-replace example.com example.net --export=foo/bar.sql`
     Then STDERR should contain:
       """
       Error: Unable to open export file "foo/bar.sql" for writing:
@@ -203,34 +203,34 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace specific table
-    Given a WP install
+    Given a FP install
 
-    When I run `wp post create --post_title=foo --porcelain`
+    When I run `fp post create --post_title=foo --porcelain`
     Then save STDOUT as {POST_ID}
 
-    When I run `wp option update bar foo`
+    When I run `fp option update bar foo`
     Then STDOUT should not be empty
 
-    When I run `wp search-replace foo burrito wp_posts --export=wordpress.sql --verbose`
+    When I run `fp search-replace foo burrito fp_posts --export=finpress.sql --verbose`
     Then STDOUT should contain:
       """
-      Checking: wp_posts
+      Checking: fp_posts
       """
     And STDOUT should contain:
       """
-      Success: Made 1 replacement and exported to wordpress.sql.
+      Success: Made 1 replacement and exported to finpress.sql.
       """
 
-    When I run `wp db import wordpress.sql`
+    When I run `fp db import finpress.sql`
     Then STDOUT should not be empty
 
-    When I run `wp post get {POST_ID} --field=title`
+    When I run `fp post get {POST_ID} --field=title`
     Then STDOUT should be:
       """
       burrito
       """
 
-    When I run `wp option get bar`
+    When I run `fp option get bar`
     Then STDOUT should be:
       """
       foo
@@ -238,8 +238,8 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Search / replace export should cater for field/table names that use reserved words or unusual characters
-    Given a WP install
-    # Unlike search-replace.features version, don't use `back``tick` column name as WP_CLI\Iterators\Table::build_fields() can't handle it.
+    Given a FP install
+    # Unlike search-replace.features version, don't use `back``tick` column name as FP_CLI\Iterators\Table::build_fields() can't handle it.
     And a esc_sql_ident.sql file:
       """
       CREATE TABLE `TABLE` (`KEY` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `VALUES` TEXT, `single'double"quote` TEXT, PRIMARY KEY (`KEY`) );
@@ -247,10 +247,10 @@ Feature: Search / replace with file export
       INSERT INTO `TABLE` (`VALUES`, `single'double"quote`) VALUES ('v"vvvv_v2', 'v"vvvv_v2' );
       """
 
-    When I run `wp db query "SOURCE esc_sql_ident.sql;"`
+    When I run `fp db query "SOURCE esc_sql_ident.sql;"`
     Then STDERR should be empty
 
-    When I run `wp search-replace 'v"vvvv_v' 'w"wwww_w' TABLE --export --all-tables`
+    When I run `fp search-replace 'v"vvvv_v' 'w"wwww_w' TABLE --export --all-tables`
     Then STDOUT should contain:
       """
       INSERT INTO `TABLE` (`KEY`, `VALUES`, `single'double"quote`) VALUES
@@ -265,7 +265,7 @@ Feature: Search / replace with file export
       """
     And STDERR should be empty
 
-    When I run `wp search-replace 'v"vvvv_v2' 'w"wwww_w2' TABLE --export --regex --all-tables`
+    When I run `fp search-replace 'v"vvvv_v2' 'w"wwww_w2' TABLE --export --regex --all-tables`
     Then STDOUT should contain:
       """
       INSERT INTO `TABLE` (`KEY`, `VALUES`, `single'double"quote`) VALUES
@@ -282,53 +282,53 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: Suppress report or only report changes on export to file
-    Given a WP install
+    Given a FP install
 
-    When I run `wp option set foo baz`
-    And I run `wp option get foo`
+    When I run `fp option set foo baz`
+    And I run `fp option get foo`
     Then STDOUT should be:
       """
       baz
       """
 
-    When I run `wp post create --post_title=baz --porcelain`
+    When I run `fp post create --post_title=baz --porcelain`
     Then save STDOUT as {POST_ID}
 
-    When I run `wp post meta add {POST_ID} foo baz`
+    When I run `fp post meta add {POST_ID} foo baz`
     Then STDOUT should not be empty
 
-    When I run `wp search-replace baz bar --export=wordpress.sql`
+    When I run `fp search-replace baz bar --export=finpress.sql`
     Then STDOUT should contain:
       """
-      Success: Made 3 replacements and exported to wordpress.sql.
+      Success: Made 3 replacements and exported to finpress.sql.
       """
     And STDOUT should be a table containing rows:
     | Table          | Column       | Replacements | Type |
-    | wp_commentmeta | meta_id      | 0            | PHP  |
-    | wp_options     | option_value | 1            | PHP  |
-    | wp_postmeta    | meta_value   | 1            | PHP  |
-    | wp_posts       | post_title   | 1            | PHP  |
-    | wp_users       | display_name | 0            | PHP  |
+    | fp_commentmeta | meta_id      | 0            | PHP  |
+    | fp_options     | option_value | 1            | PHP  |
+    | fp_postmeta    | meta_value   | 1            | PHP  |
+    | fp_posts       | post_title   | 1            | PHP  |
+    | fp_users       | display_name | 0            | PHP  |
     And STDERR should be empty
 
-    When I run `wp search-replace baz bar --report --export=wordpress.sql`
+    When I run `fp search-replace baz bar --report --export=finpress.sql`
     Then STDOUT should contain:
       """
-      Success: Made 3 replacements and exported to wordpress.sql.
+      Success: Made 3 replacements and exported to finpress.sql.
       """
     And STDOUT should be a table containing rows:
     | Table          | Column       | Replacements | Type |
-    | wp_commentmeta | meta_id      | 0            | PHP  |
-    | wp_options     | option_value | 1            | PHP  |
-    | wp_postmeta    | meta_value   | 1            | PHP  |
-    | wp_posts       | post_title   | 1            | PHP  |
-    | wp_users       | display_name | 0            | PHP  |
+    | fp_commentmeta | meta_id      | 0            | PHP  |
+    | fp_options     | option_value | 1            | PHP  |
+    | fp_postmeta    | meta_value   | 1            | PHP  |
+    | fp_posts       | post_title   | 1            | PHP  |
+    | fp_users       | display_name | 0            | PHP  |
     And STDERR should be empty
 
-    When I run `wp search-replace baz bar --no-report --export=wordpress.sql`
+    When I run `fp search-replace baz bar --no-report --export=finpress.sql`
     Then STDOUT should contain:
       """
-      Success: Made 3 replacements and exported to wordpress.sql.
+      Success: Made 3 replacements and exported to finpress.sql.
       """
     And STDOUT should not contain:
       """
@@ -336,55 +336,55 @@ Feature: Search / replace with file export
       """
     And STDOUT should not contain:
       """
-      wp_commentmeta	meta_id	0	PHP
+      fp_commentmeta	meta_id	0	PHP
       """
     And STDOUT should not contain:
       """
-      wp_options	option_value	1	PHP
+      fp_options	option_value	1	PHP
       """
     And STDERR should be empty
 
-    When I run `wp search-replace baz bar --no-report-changed-only --export=wordpress.sql`
+    When I run `fp search-replace baz bar --no-report-changed-only --export=finpress.sql`
     Then STDOUT should contain:
       """
-      Success: Made 3 replacements and exported to wordpress.sql.
+      Success: Made 3 replacements and exported to finpress.sql.
       """
     And STDOUT should be a table containing rows:
     | Table          | Column       | Replacements | Type |
-    | wp_commentmeta | meta_id      | 0            | PHP  |
-    | wp_options     | option_value | 1            | PHP  |
-    | wp_postmeta    | meta_value   | 1            | PHP  |
-    | wp_posts       | post_title   | 1            | PHP  |
-    | wp_users       | display_name | 0            | PHP  |
+    | fp_commentmeta | meta_id      | 0            | PHP  |
+    | fp_options     | option_value | 1            | PHP  |
+    | fp_postmeta    | meta_value   | 1            | PHP  |
+    | fp_posts       | post_title   | 1            | PHP  |
+    | fp_users       | display_name | 0            | PHP  |
     And STDERR should be empty
 
-    When I run `wp search-replace baz bar --report-changed-only --export=wordpress.sql`
+    When I run `fp search-replace baz bar --report-changed-only --export=finpress.sql`
     Then STDOUT should contain:
       """
-      Success: Made 3 replacements and exported to wordpress.sql.
+      Success: Made 3 replacements and exported to finpress.sql.
       """
     And STDOUT should end with a table containing rows:
     | Table          | Column       | Replacements | Type |
-    | wp_options     | option_value | 1            | PHP  |
-    | wp_postmeta    | meta_value   | 1            | PHP  |
-    | wp_posts       | post_title   | 1            | PHP  |
+    | fp_options     | option_value | 1            | PHP  |
+    | fp_postmeta    | meta_value   | 1            | PHP  |
+    | fp_posts       | post_title   | 1            | PHP  |
     And STDOUT should not contain:
       """
-      wp_commentmeta	meta_id	0	PHP
+      fp_commentmeta	meta_id	0	PHP
       """
     And STDOUT should not contain:
       """
-      wp_users	display_name	0	PHP
+      fp_users	display_name	0	PHP
       """
     And STDERR should be empty
 
   @require-mysql
   Scenario: Search / replace should remove placeholder escape on export
-    Given a WP install
-    And I run `wp post create --post_title=test-remove-placeholder-escape% --porcelain`
+    Given a FP install
+    And I run `fp post create --post_title=test-remove-placeholder-escape% --porcelain`
     Then save STDOUT as {POST_ID}
 
-    When I run `wp search-replace baz bar --export | grep test-remove-placeholder-escape`
+    When I run `fp search-replace baz bar --export | grep test-remove-placeholder-escape`
     Then STDOUT should contain:
       """
       'test-remove-placeholder-escape%'
@@ -396,10 +396,10 @@ Feature: Search / replace with file export
 
   @require-mysql
   Scenario: NULLs exported as NULL and not null string
-    Given a WP install
-    And I run `wp db query "INSERT INTO wp_postmeta VALUES (9999, 9999, NULL, 'foo')"`
+    Given a FP install
+    And I run `fp db query "INSERT INTO fp_postmeta VALUES (9999, 9999, NULL, 'foo')"`
 
-    When I run `wp search-replace bar replaced wp_postmeta --export`
+    When I run `fp search-replace bar replaced fp_postmeta --export`
     Then STDOUT should contain:
       """
      ('9999', '9999', NULL, 'foo')

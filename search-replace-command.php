@@ -1,12 +1,12 @@
 <?php
 
-if ( ! class_exists( 'WP_CLI' ) ) {
+if ( ! class_exists( 'FP_CLI' ) ) {
 	return;
 }
 
-$wpcli_search_replace_autoloader = __DIR__ . '/vendor/autoload.php';
-if ( file_exists( $wpcli_search_replace_autoloader ) ) {
-	require_once $wpcli_search_replace_autoloader;
+$fpcli_search_replace_autoloader = __DIR__ . '/vendor/autoload.php';
+if ( file_exists( $fpcli_search_replace_autoloader ) ) {
+	require_once $fpcli_search_replace_autoloader;
 }
 
-WP_CLI::add_command( 'search-replace', 'Search_Replace_Command' );
+FP_CLI::add_command( 'search-replace', 'Search_Replace_Command' );
