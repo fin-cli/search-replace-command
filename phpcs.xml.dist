@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="FP-CLI-search-replace">
-	<description>Custom ruleset for FP-CLI search-replace-command</description>
+<ruleset name="FIN-CLI-search-replace">
+	<description>Custom ruleset for FIN-CLI search-replace-command</description>
 
 	<!--
 	#############################################################################
@@ -24,12 +24,12 @@
 
 	<!--
 	#############################################################################
-	USE THE FP_CLI_CS RULESET
+	USE THE FIN_CLI_CS RULESET
 	#############################################################################
 	-->
 
-	<rule ref="FP_CLI_CS">
-		<!-- Can't be helped as FP itself uses these functions for the data being adjusted. -->
+	<rule ref="FIN_CLI_CS">
+		<!-- Can't be helped as FIN itself uses these functions for the data being adjusted. -->
 		<exclude name="FinPress.PHP.DiscouragedPHPFunctions.serialize_unserialize"/>
 		<exclude name="FinPress.PHP.DiscouragedPHPFunctions.serialize_serialize"/>
 		<!-- Allow $new as an argument to mitigate code churn -->
@@ -51,8 +51,8 @@
 	<rule ref="FinPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="FP_CLI\Search"/><!-- Namespaces. -->
-				<element value="fpcli_search"/><!-- Global variables and such. -->
+				<element value="FIN_CLI\Search"/><!-- Namespaces. -->
+				<element value="fincli_search"/><!-- Global variables and such. -->
 			</property>
 		</properties>
 	</rule>
@@ -62,7 +62,7 @@
 		<exclude-pattern>*/src/Search_Replace_Command\.php$</exclude-pattern>
 	</rule>
 	<rule ref="FinPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound">
-		<exclude-pattern>*/src/FP_CLI/SearchReplacer\.php$</exclude-pattern>
+		<exclude-pattern>*/src/FIN_CLI/SearchReplacer\.php$</exclude-pattern>
 	</rule>
 
 	<!-- Allow for some MySQL native non-snake-case properties.

@@ -1,6 +1,6 @@
 <?php
 
-namespace FP_CLI;
+namespace FIN_CLI;
 
 use ArrayObject;
 use Exception;
@@ -134,8 +134,8 @@ class SearchReplacer {
 				// This type error is thrown when trying to unserialize a string that does not fit the
 				// type declarations of the properties it is supposed to fill.
 				// This type checking was introduced with PHP 8.1.
-				// See https://github.com/fp-cli/search-replace-command/issues/191
-				\FP_CLI::warning(
+				// See https://github.com/fin-cli/search-replace-command/issues/191
+				\FIN_CLI::warning(
 					sprintf(
 						'Skipping an inconvertible serialized object: "%s", replacements might not be complete. Reason: %s.',
 						$data,
@@ -156,7 +156,7 @@ class SearchReplacer {
 			} elseif ( $this->recurse_objects && ( is_object( $data ) || $data instanceof \__PHP_Incomplete_Class ) ) {
 				if ( $data instanceof \__PHP_Incomplete_Class ) {
 					$array = new ArrayObject( $data );
-					\FP_CLI::warning(
+					\FIN_CLI::warning(
 						sprintf(
 							'Skipping an uninitialized class "%s", replacements might not be complete.',
 							$array['__PHP_Incomplete_Class_Name']
@@ -170,8 +170,8 @@ class SearchReplacer {
 					} catch ( \Error $exception ) { // phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound
 						// This error is thrown when the object that was unserialized cannot be iterated upon.
 						// The most notable reason is an empty `mysqli_result` object which is then considered to be "already closed".
-						// See https://github.com/fp-cli/search-replace-command/pull/192#discussion_r1412310179
-						\FP_CLI::warning(
+						// See https://github.com/fin-cli/search-replace-command/pull/192#discussion_r1412310179
+						\FIN_CLI::warning(
 							sprintf(
 								'Skipping an inconvertible serialized object of type "%s", replacements might not be complete. Reason: %s.',
 								is_object( $data ) ? get_class( $data ) : gettype( $data ),
@@ -194,7 +194,7 @@ class SearchReplacer {
 
 					$result = preg_replace( $search_regex, $this->to, $data, $this->regex_limit );
 					if ( null === $result || PREG_NO_ERROR !== preg_last_error() ) {
-						\FP_CLI::warning(
+						\FIN_CLI::warning(
 							sprintf(
 								'The provided regular expression threw a PCRE error - %s',
 								$this->preg_error_message( $result )

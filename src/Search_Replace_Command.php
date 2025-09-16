@@ -2,12 +2,12 @@
 
 use cli\Colors;
 use cli\Table;
-use FP_CLI\Iterators;
-use FP_CLI\SearchReplacer;
-use FP_CLI\Utils;
+use FIN_CLI\Iterators;
+use FIN_CLI\SearchReplacer;
+use FIN_CLI\Utils;
 use function cli\safe_substr;
 
-class Search_Replace_Command extends FP_CLI_Command {
+class Search_Replace_Command extends FIN_CLI_Command {
 
 	/**
 	 * @var bool
@@ -125,7 +125,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 * Searches through all rows in a selection of tables and replaces
 	 * appearances of the first string with the second string.
 	 *
-	 * By default, the command uses tables registered to the `$fpdb` object. On
+	 * By default, the command uses tables registered to the `$findb` object. On
 	 * multisite, this will just be the tables for the current site unless
 	 * `--network` is specified.
 	 *
@@ -142,23 +142,23 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 *
 	 * [<table>...]
 	 * : List of database tables to restrict the replacement to. Wildcards are
-	 * supported, e.g. `'fp_*options'` or `'fp_post*'`.
+	 * supported, e.g. `'fin_*options'` or `'fin_post*'`.
 	 *
 	 * [--dry-run]
 	 * : Run the entire search/replace operation and show report, but don't save
 	 * changes to the database.
 	 *
 	 * [--network]
-	 * : Search/replace through all the tables registered to $fpdb in a
+	 * : Search/replace through all the tables registered to $findb in a
 	 * multisite install.
 	 *
 	 * [--all-tables-with-prefix]
 	 * : Enable replacement on any tables that match the table prefix even if
-	 * not registered on $fpdb.
+	 * not registered on $findb.
 	 *
 	 * [--all-tables]
 	 * : Enable replacement on ALL tables in the database, regardless of the
-	 * prefix, and even if not registered on $fpdb. Overrides --network
+	 * prefix, and even if not registered on $findb. Overrides --network
 	 * and --all-tables-with-prefix.
 	 *
 	 * [--export[=<file>]]
@@ -172,7 +172,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 *
 	 * [--skip-tables=<tables>]
 	 * : Do not perform the replacement on specific tables. Use commas to
-	 * specify multiple tables. Wildcards are supported, e.g. `'fp_*options'` or `'fp_post*'`.
+	 * specify multiple tables. Wildcards are supported, e.g. `'fin_*options'` or `'fin_post*'`.
 	 *
 	 * [--skip-columns=<columns>]
 	 * : Do not perform the replacement on specific columns. Use commas to
@@ -234,33 +234,33 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 * ## EXAMPLES
 	 *
 	 *     # Search and replace but skip one column
-	 *     $ fp search-replace 'http://example.test' 'http://example.com' --skip-columns=guid
+	 *     $ fin search-replace 'http://example.test' 'http://example.com' --skip-columns=guid
 	 *
 	 *     # Run search/replace operation but dont save in database
-	 *     $ fp search-replace 'foo' 'bar' fp_posts fp_postmeta fp_terms --dry-run
+	 *     $ fin search-replace 'foo' 'bar' fin_posts fin_postmeta fin_terms --dry-run
 	 *
 	 *     # Run case-insensitive regex search/replace operation (slow)
-	 *     $ fp search-replace '\[foo id="([0-9]+)"' '[bar id="\1"' --regex --regex-flags='i'
+	 *     $ fin search-replace '\[foo id="([0-9]+)"' '[bar id="\1"' --regex --regex-flags='i'
 	 *
 	 *     # Turn your production multisite database into a local dev database
-	 *     $ fp search-replace --url=example.com example.com example.test 'fp_*options' fp_blogs fp_site --network
+	 *     $ fin search-replace --url=example.com example.com example.test 'fin_*options' fin_blogs fin_site --network
 	 *
 	 *     # Search/replace to a SQL file without transforming the database
-	 *     $ fp search-replace foo bar --export=database.sql
+	 *     $ fin search-replace foo bar --export=database.sql
 	 *
 	 *     # Bash script: Search/replace production to development url (multisite compatible)
 	 *     #!/bin/bash
-	 *     if $(fp --url=http://example.com core is-installed --network); then
-	 *         fp search-replace --url=http://example.com 'http://example.com' 'http://example.test' --recurse-objects --network --skip-columns=guid --skip-tables=fp_users
+	 *     if $(fin --url=http://example.com core is-installed --network); then
+	 *         fin search-replace --url=http://example.com 'http://example.com' 'http://example.test' --recurse-objects --network --skip-columns=guid --skip-tables=fin_users
 	 *     else
-	 *         fp search-replace 'http://example.com' 'http://example.test' --recurse-objects --skip-columns=guid --skip-tables=fp_users
+	 *         fin search-replace 'http://example.com' 'http://example.test' --recurse-objects --skip-columns=guid --skip-tables=fin_users
 	 *     fi
 	 *
 	 * @param array<string> $args Positional arguments.
 	 * @param array{'dry-run'?: bool, 'network'?: bool, 'all-tables-with-prefix'?: bool, 'all-tables'?: bool, 'export'?: string, 'export_insert_size'?: string, 'skip-tables'?: string, 'skip-columns'?: string, 'include-columns'?: string, 'precise'?: bool, 'recurse-objects'?: bool, 'verbose'?: bool, 'regex'?: bool, 'regex-flags'?: string, 'regex-delimiter'?: string, 'regex-limit'?: string, 'format': string, 'report'?: bool, 'report-changed-only'?: bool, 'log'?: string, 'before_context'?: string, 'after_context'?: string} $assoc_args Associative arguments.
 	 */
 	public function __invoke( $args, $assoc_args ) {
-		global $fpdb;
+		global $findb;
 		$old                   = array_shift( $args );
 		$new                   = array_shift( $args );
 		$total                 = 0;
@@ -286,7 +286,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$regex_limit = Utils\get_flag_value( $assoc_args, 'regex-limit' );
 		if ( null !== $regex_limit ) {
 			if ( ! preg_match( '/^(?:[0-9]+|-1)$/', $regex_limit ) || 0 === (int) $regex_limit ) {
-				FP_CLI::error( '`--regex-limit` expects a non-zero positive integer or -1.' );
+				FIN_CLI::error( '`--regex-limit` expects a non-zero positive integer or -1.' );
 			}
 			$this->regex_limit = (int) $regex_limit;
 		}
@@ -310,7 +310,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				} else {
 					$msg = "The regex '$search_regex' fails.";
 				}
-				FP_CLI::error( $msg . $preg_error_message );
+				FIN_CLI::error( $msg . $preg_error_message );
 			}
 		}
 
@@ -319,14 +319,14 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$this->include_columns = array_filter( explode( ',', Utils\get_flag_value( $assoc_args, 'include-columns', '' ) ) );
 
 		if ( $old === $new && ! $this->regex ) {
-			FP_CLI::warning( "Replacement value '{$old}' is identical to search value '{$new}'. Skipping operation." );
+			FIN_CLI::warning( "Replacement value '{$old}' is identical to search value '{$new}'. Skipping operation." );
 			exit;
 		}
 
 		$export = Utils\get_flag_value( $assoc_args, 'export' );
 		if ( null !== $export ) {
 			if ( $this->dry_run ) {
-				FP_CLI::error( 'You cannot supply --dry-run and --export at the same time.' );
+				FIN_CLI::error( 'You cannot supply --dry-run and --export at the same time.' );
 			}
 			if ( true === $export ) {
 				$this->export_handle = STDOUT;
@@ -335,7 +335,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$this->export_handle = @fopen( $export, 'w' );
 				if ( false === $this->export_handle ) {
 					$error = error_get_last();
-					FP_CLI::error( sprintf( 'Unable to open export file "%s" for writing: %s.', $export, $error['message'] ?? '(unknown error)' ) );
+					FIN_CLI::error( sprintf( 'Unable to open export file "%s" for writing: %s.', $export, $error['message'] ?? '(unknown error)' ) );
 				}
 			}
 			$export_insert_size = Utils\get_flag_value( $assoc_args, 'export_insert_size', 50 );
@@ -354,7 +354,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$this->log_handle = @fopen( $log, 'w' );
 				if ( false === $this->log_handle ) {
 					$error = error_get_last();
-					FP_CLI::error( sprintf( 'Unable to open log file "%s" for writing: %s.', $log, $error['message'] ?? '(unknown error)' ) );
+					FIN_CLI::error( sprintf( 'Unable to open log file "%s" for writing: %s.', $log, $error['message'] ?? '(unknown error)' ) );
 				}
 			}
 
@@ -368,7 +368,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$this->log_after_context = (int) $after_context;
 			}
 
-			$log_prefixes = getenv( 'FP_CLI_SEARCH_REPLACE_LOG_PREFIXES' );
+			$log_prefixes = getenv( 'FIN_CLI_SEARCH_REPLACE_LOG_PREFIXES' );
 			if ( false !== $log_prefixes && preg_match( '/^([^,]*),([^,]*)$/', $log_prefixes, $matches ) ) {
 				$this->log_prefixes = array( $matches[1], $matches[2] );
 			}
@@ -387,7 +387,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				);
 			}
 
-			$log_colors = getenv( 'FP_CLI_SEARCH_REPLACE_LOG_COLORS' );
+			$log_colors = getenv( 'FIN_CLI_SEARCH_REPLACE_LOG_COLORS' );
 			if ( false !== $log_colors && preg_match( '/^([^,]*),([^,]*),([^,]*)$/', $log_colors, $matches ) ) {
 				$default_log_colors = array(
 					'log_table_column_id' => $matches[1],
@@ -397,7 +397,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 			}
 
 			$this->log_colors   = $this->get_colors( $assoc_args, $default_log_colors );
-			$this->log_encoding = 0 === strpos( $fpdb->charset, 'utf8' ) ? 'UTF-8' : false;
+			$this->log_encoding = 0 === strpos( $findb->charset, 'utf8' ) ? 'UTF-8' : false;
 		}
 
 		$this->report = Utils\get_flag_value( $assoc_args, 'report', true );
@@ -412,7 +412,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$this->skip_columns[] = 'user_pass';
 
 		// Get table names based on leftover $args or supplied $assoc_args
-		$tables = Utils\fp_get_table_names( $args, $assoc_args );
+		$tables = Utils\fin_get_table_names( $args, $assoc_args );
 
 		foreach ( $tables as $table ) {
 
@@ -428,7 +428,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				fwrite( $this->export_handle, "\nDROP TABLE IF EXISTS $table_sql;\n" );
 
 				// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-				$row = $fpdb->get_row( "SHOW CREATE TABLE $table_sql", ARRAY_N );
+				$row = $findb->get_row( "SHOW CREATE TABLE $table_sql", ARRAY_N );
 
 				fwrite( $this->export_handle, $row[1] . ";\n" );
 				list( $table_report, $total_rows ) = $this->php_export_table( $table, $old, $new );
@@ -453,7 +453,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				if ( $this->report ) {
 					$report[] = array( $table, '', 'skipped', '' );
 				} else {
-					FP_CLI::warning( $all_columns ? "No primary keys for table '$table'." : "No such table '$table'." );
+					FIN_CLI::warning( $all_columns ? "No primary keys for table '$table'." : "No such table '$table'." );
 				}
 				continue;
 			}
@@ -469,20 +469,20 @@ class Search_Replace_Command extends FP_CLI_Command {
 
 				if ( $this->verbose && 'count' !== $this->format ) {
 					$this->start_time = microtime( true );
-					FP_CLI::log( sprintf( 'Checking: %s.%s', $table, $col ) );
+					FIN_CLI::log( sprintf( 'Checking: %s.%s', $table, $col ) );
 				}
 
 				$serial_row = false;
 
 				if ( ! $php_only && ! $this->regex ) {
 					$col_sql          = self::esc_sql_ident( $col );
-					$fpdb->last_error = '';
+					$findb->last_error = '';
 
 					// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-					$serial_row = $fpdb->get_row( "SELECT * FROM $table_sql WHERE $col_sql REGEXP '^[aiO]:[1-9]' LIMIT 1" );
+					$serial_row = $findb->get_row( "SELECT * FROM $table_sql WHERE $col_sql REGEXP '^[aiO]:[1-9]' LIMIT 1" );
 
 					// When the regex triggers an error, we should fall back to PHP
-					if ( false !== strpos( $fpdb->last_error, 'ERROR 1139' ) ) {
+					if ( false !== strpos( $findb->last_error, 'ERROR 1139' ) ) {
 						$serial_row = true;
 					}
 				}
@@ -508,12 +508,12 @@ class Search_Replace_Command extends FP_CLI_Command {
 		}
 
 		// Only informational output after this point
-		if ( FP_CLI::get_config( 'quiet' ) || STDOUT === $this->export_handle ) {
+		if ( FIN_CLI::get_config( 'quiet' ) || STDOUT === $this->export_handle ) {
 			return;
 		}
 
 		if ( 'count' === $this->format ) {
-			FP_CLI::line( (string) $total );
+			FIN_CLI::line( (string) $total );
 			return;
 		}
 
@@ -529,14 +529,14 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$success_message = 1 === $total ? "Made 1 replacement and exported to {$assoc_args['export']}." : "Made {$total} replacements and exported to {$assoc_args['export']}.";
 			} else {
 				$success_message = 1 === $total ? 'Made 1 replacement.' : "Made $total replacements.";
-				if ( $total && 'Default' !== Utils\fp_get_cache_type() ) {
-					$success_message .= ' Please remember to flush your persistent object cache with `fp cache flush`.';
+				if ( $total && 'Default' !== Utils\fin_get_cache_type() ) {
+					$success_message .= ' Please remember to flush your persistent object cache with `fin cache flush`.';
 				}
 			}
-			FP_CLI::success( $success_message );
+			FIN_CLI::success( $success_message );
 		} else {
 			$success_message = ( 1 === $total ) ? '%d replacement to be made.' : '%d replacements to be made.';
-			FP_CLI::success( sprintf( $success_message, $total ) );
+			FIN_CLI::success( sprintf( $success_message, $total ) );
 		}
 	}
 
@@ -554,7 +554,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$col_counts = array_fill_keys( $all_columns, 0 );
 		if ( $this->verbose && 'table' === $this->format ) {
 			$this->start_time = microtime( true );
-			FP_CLI::log( sprintf( 'Checking: %s', $table ) );
+			FIN_CLI::log( sprintf( 'Checking: %s', $table ) );
 		}
 
 		$rows = array();
@@ -590,14 +590,14 @@ class Search_Replace_Command extends FP_CLI_Command {
 
 		if ( $this->verbose && 'table' === $this->format ) {
 			$time = round( microtime( true ) - $this->start_time, 3 );
-			FP_CLI::log( sprintf( '%d columns and %d total rows affected using PHP (in %ss).', $total_cols, $total_rows, $time ) );
+			FIN_CLI::log( sprintf( '%d columns and %d total rows affected using PHP (in %ss).', $total_cols, $total_rows, $time ) );
 		}
 
 		return array( $table_report, $total_rows );
 	}
 
 	private function sql_handle_col( $col, $primary_keys, $table, $old, $new ) {
-		global $fpdb;
+		global $findb;
 
 		$table_sql = self::esc_sql_ident( $table );
 		$col_sql   = self::esc_sql_ident( $col );
@@ -606,25 +606,25 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$count = $this->log_sql_diff( $col, $primary_keys, $table, $old, $new );
 			} else {
 				// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-				$count = $fpdb->get_var( $fpdb->prepare( "SELECT COUNT($col_sql) FROM $table_sql WHERE $col_sql LIKE BINARY %s;", '%' . self::esc_like( $old ) . '%' ) );
+				$count = $findb->get_var( $findb->prepare( "SELECT COUNT($col_sql) FROM $table_sql WHERE $col_sql LIKE BINARY %s;", '%' . self::esc_like( $old ) . '%' ) );
 			}
 		} else {
 			if ( $this->log_handle ) {
 				$this->log_sql_diff( $col, $primary_keys, $table, $old, $new );
 			}
 			// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-			$count = $fpdb->query( $fpdb->prepare( "UPDATE $table_sql SET $col_sql = REPLACE($col_sql, %s, %s);", $old, $new ) );
+			$count = $findb->query( $findb->prepare( "UPDATE $table_sql SET $col_sql = REPLACE($col_sql, %s, %s);", $old, $new ) );
 		}
 
 		if ( $this->verbose && 'table' === $this->format ) {
 			$time = round( microtime( true ) - $this->start_time, 3 );
-			FP_CLI::log( sprintf( '%d rows affected using SQL (in %ss).', $count, $time ) );
+			FIN_CLI::log( sprintf( '%d rows affected using SQL (in %ss).', $count, $time ) );
 		}
 		return $count;
 	}
 
 	private function php_handle_col( $col, $primary_keys, $table, $old, $new ) {
-		global $fpdb;
+		global $findb;
 
 		$count    = 0;
 		$replacer = new SearchReplacer( $old, $new, $this->recurse_objects, $this->regex, $this->regex_flags, $this->regex_delimiter, null !== $this->log_handle, $this->regex_limit );
@@ -635,7 +635,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$base_key_condition = '';
 		$where_key          = '';
 		if ( ! $this->regex ) {
-			$base_key_condition = "$col_sql" . $fpdb->prepare( ' LIKE BINARY %s', '%' . self::esc_like( $old ) . '%' );
+			$base_key_condition = "$col_sql" . $findb->prepare( ' LIKE BINARY %s', '%' . self::esc_like( $old ) . '%' );
 			$where_key          = "WHERE $base_key_condition";
 		}
 
@@ -654,7 +654,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		// - FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
 		// - FinPress.CodeAnalysis.AssignmentInCondition -- no reason to do copy-paste for a single valid assignment in while
 		// phpcs:ignore
-		while ( $rows = $fpdb->get_results( "SELECT {$primary_keys_sql} FROM {$table_sql} {$where_key} {$order_by_sql} LIMIT {$limit}" ) ) {
+		while ( $rows = $findb->get_results( "SELECT {$primary_keys_sql} FROM {$table_sql} {$where_key} {$order_by_sql} LIMIT {$limit}" ) ) {
 			foreach ( $rows as $keys ) {
 				$where_sql = '';
 				foreach ( (array) $keys as $k => $v ) {
@@ -665,7 +665,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				}
 
 				// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-				$col_value = $fpdb->get_var( "SELECT {$col_sql} FROM {$table_sql} WHERE {$where_sql}" );
+				$col_value = $findb->get_var( "SELECT {$col_sql} FROM {$table_sql} WHERE {$where_sql}" );
 
 				if ( '' === $col_value ) {
 					continue;
@@ -695,7 +695,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 						$update_where[ $k ] = $v;
 					}
 
-					$fpdb->update( $table, [ $col => $value ], $update_where );
+					$findb->update( $table, [ $col => $value ], $update_where );
 				}
 			}
 
@@ -737,14 +737,14 @@ class Search_Replace_Command extends FP_CLI_Command {
 
 		if ( $this->verbose && 'table' === $this->format ) {
 			$time = round( microtime( true ) - $this->start_time, 3 );
-			FP_CLI::log( sprintf( '%d rows affected using PHP (in %ss).', $count, $time ) );
+			FIN_CLI::log( sprintf( '%d rows affected using PHP (in %ss).', $count, $time ) );
 		}
 
 		return $count;
 	}
 
 	private function write_sql_row_fields( $table, $rows ) {
-		global $fpdb;
+		global $findb;
 
 		if ( empty( $rows ) ) {
 			return;
@@ -787,15 +787,15 @@ class Search_Replace_Command extends FP_CLI_Command {
 			if ( ( 0 === $index % $export_insert_size && $index > 0 ) || $index === $count ) {
 				$sql .= ";\n";
 
-				if ( method_exists( $fpdb, 'remove_placeholder_escape' ) ) {
+				if ( method_exists( $findb, 'remove_placeholder_escape' ) ) {
 					// since 4.8.3
 
 					// @phpstan-ignore method.nonObject
-					$sql = $fpdb->remove_placeholder_escape( $fpdb->prepare( $sql, array_values( $values ) ) ); // phpcs:ignore FinPress.DB.PreparedSQL.NotPrepared -- verified inputs above
+					$sql = $findb->remove_placeholder_escape( $findb->prepare( $sql, array_values( $values ) ) ); // phpcs:ignore FinPress.DB.PreparedSQL.NotPrepared -- verified inputs above
 				} else {
 					// 4.8.2 or less
 					// phpcs:ignore FinPress.DB.PreparedSQL.NotPrepared -- verified inputs above
-					$sql = $fpdb->prepare( $sql, array_values( $values ) );
+					$sql = $findb->prepare( $sql, array_values( $values ) );
 				}
 
 				fwrite( $this->export_handle, $sql );
@@ -814,16 +814,16 @@ class Search_Replace_Command extends FP_CLI_Command {
 	}
 
 	private static function get_columns( $table ) {
-		global $fpdb;
+		global $findb;
 
 		$table_sql       = self::esc_sql_ident( $table );
 		$primary_keys    = array();
 		$text_columns    = array();
 		$all_columns     = array();
-		$suppress_errors = $fpdb->suppress_errors();
+		$suppress_errors = $findb->suppress_errors();
 
 		// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-		$results = $fpdb->get_results( "DESCRIBE $table_sql" );
+		$results = $findb->get_results( "DESCRIBE $table_sql" );
 
 		if ( ! empty( $results ) ) {
 			foreach ( $results as $col ) {
@@ -836,7 +836,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 				$all_columns[] = $col->Field;
 			}
 		}
-		$fpdb->suppress_errors( $suppress_errors );
+		$findb->suppress_errors( $suppress_errors );
 		return array( $primary_keys, $text_columns, $all_columns );
 	}
 
@@ -851,16 +851,16 @@ class Search_Replace_Command extends FP_CLI_Command {
 	}
 
 	private static function esc_like( $old ) {
-		global $fpdb;
+		global $findb;
 
 		// Remove notices in 4.0 and support backwards compatibility
-		if ( method_exists( $fpdb, 'esc_like' ) ) {
+		if ( method_exists( $findb, 'esc_like' ) ) {
 			// 4.0
-			$old = $fpdb->esc_like( $old );
+			$old = $findb->esc_like( $old );
 		} else {
 			// Note: this double escaping is actually necessary, even though `esc_like()` will be used in a `prepare()`.
 			// @phpstan-ignore function.deprecated
-			$old = like_escape( esc_sql( $old ) ); // phpcs:ignore FinPress.FP.DeprecatedFunctions.like_escapeFound -- BC-layer for FP 3.9 or less.
+			$old = like_escape( esc_sql( $old ) ); // phpcs:ignore FinPress.FIN.DeprecatedFunctions.like_escapeFound -- BC-layer for FIN 3.9 or less.
 		}
 
 		return $old;
@@ -918,7 +918,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 * @return array Array containing 2-element arrays keyed to the input $colors array.
 	 */
 	private function get_colors( $assoc_args, $colors ) {
-		$color_reset = FP_CLI::colorize( '%n' );
+		$color_reset = FIN_CLI::colorize( '%n' );
 
 		$color_code_callback = static function ( $v ) {
 			return substr( $v, 1 );
@@ -934,12 +934,12 @@ class Search_Replace_Command extends FP_CLI_Command {
 			$col_color_flag = Utils\get_flag_value( $assoc_args, $color_col . '_color' );
 			if ( null !== $col_color_flag ) {
 				if ( ! preg_match( $color_codes_regex, $col_color_flag, $matches ) ) {
-					FP_CLI::warning( "Unrecognized percent color code '$col_color_flag' for '{$color_col}_color'." );
+					FIN_CLI::warning( "Unrecognized percent color code '$col_color_flag' for '{$color_col}_color'." );
 				} else {
 					$colors[ $color_col ] = $matches[0];
 				}
 			}
-			$colors[ $color_col ] = $colors[ $color_col ] ? array( FP_CLI::colorize( $colors[ $color_col ] ), $color_reset ) : array( '', '' );
+			$colors[ $color_col ] = $colors[ $color_col ] ? array( FIN_CLI::colorize( $colors[ $color_col ] ), $color_reset ) : array( '', '' );
 		}
 
 		return $colors;
@@ -956,7 +956,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 	 * @return int Count of changed rows.
 	 */
 	private function log_sql_diff( $col, $primary_keys, $table, $old, $new ) {
-		global $fpdb;
+		global $findb;
 		if ( $primary_keys ) {
 			$esc_primary_keys = implode( ', ', self::esc_sql_ident( $primary_keys ) );
 			$primary_keys_sql = count( $primary_keys ) > 1 ? "CONCAT_WS(',', {$esc_primary_keys}), " : "{$esc_primary_keys}, ";
@@ -968,7 +968,7 @@ class Search_Replace_Command extends FP_CLI_Command {
 		$col_sql   = self::esc_sql_ident( $col );
 
 		// phpcs:ignore FinPress.DB.PreparedSQL.InterpolatedNotPrepared -- escaped through self::esc_sql_ident
-		$results = $fpdb->get_results( $fpdb->prepare( "SELECT {$primary_keys_sql}{$col_sql} FROM {$table_sql} WHERE {$col_sql} LIKE BINARY %s", '%' . self::esc_like( $old ) . '%' ), ARRAY_N );
+		$results = $findb->get_results( $findb->prepare( "SELECT {$primary_keys_sql}{$col_sql} FROM {$table_sql} WHERE {$col_sql} LIKE BINARY %s", '%' . self::esc_like( $old ) . '%' ), ARRAY_N );
 
 		if ( empty( $results ) ) {
 			return 0;
